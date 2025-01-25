@@ -1,4 +1,4 @@
-import { HeroGeometric } from "../components/shape-landing-hero";
+import { HeroGeometric } from "./shape-landing-hero";
 
 function LandingPage() {
   return (

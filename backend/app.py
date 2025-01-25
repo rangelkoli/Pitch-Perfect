@@ -52,7 +52,7 @@ async def analyze_video():
         print(video_file)
         if not video_file:
             return jsonify({"error": "Failed to upload file"}), 500
-        prompt = "I Want you to describe the video in one line"
+        prompt = "I Want you to describe the video "
         response =  model.generate_content([video_file, prompt], request_options={"timeout": 600})
 
         print(response)
