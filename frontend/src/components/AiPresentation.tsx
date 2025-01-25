@@ -87,7 +87,7 @@ const WebcamStream: React.FC = () => {
   }, []);
 
   return (
-    <div>
+    <div className='flex justify-center flex-col '>
       <h1>Webcam Stream</h1>
       <video
         ref={videoRef}

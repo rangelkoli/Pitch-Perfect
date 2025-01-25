@@ -6,28 +6,38 @@ import { BrowserRouter, Routes, Route } from "react-router";
 import Dashboard from "./components/Dashboard";
 import LoginPage from "./components/Login";
 import WebcamStream from "./components/AiPresentation";
+import Header from "./components/Header";
+import PresentationFileUpload from "./components/PresentationFileUpload";
+import LandingPage from "./components/LandingPage";
 
 function App() {
   const [count, setCount] = useState(0);
   const [isLoggedin, setIsLoggedIn] = useState(true);
 
   return (
-    <>
-      {isLoggedin ? (
-        <BrowserRouter>
-          <Routes>
-            <Route path='/' element={<WebcamStream />} />
-          </Routes>
-        </BrowserRouter>
-      ) : (
-        <BrowserRouter>
-          <Routes>
-            <Route path='/' element={<LoginPage />} />
-            <Route path='/signup' element={<LoginPage />} />
-          </Routes>
-        </BrowserRouter>
-      )}
-    </>
+    <div className='min-w-screen min-h-screen '>
+      <Header />
+      <div className='flex flex-col items-center justify-center align-middle h-full'>
+        {isLoggedin ? (
+          <BrowserRouter>
+            <Routes>
+              <Route path='/' element={<WebcamStream />} />
+              <Route
+                path='/presentation'
+                element={<PresentationFileUpload />}
+              />
+            </Routes>
+          </BrowserRouter>
+        ) : (
+          <BrowserRouter>
+            <Routes>
+              <Route path='/' element={<LandingPage />} />
+              <Route path='/signup' element={<LoginPage />} />
+            </Routes>
+          </BrowserRouter>
+        )}
+      </div>
+    </div>
   );
 }
 
