@@ -89,12 +89,7 @@ const WebcamStream: React.FC = () => {
   return (
     <div className='flex justify-center flex-col '>
       <h1>Webcam Stream</h1>
-      <video
-        ref={videoRef}
-        autoPlay
-        playsInline
-        style={{ width: "100%", maxWidth: "600px" }}
-      />
+      <video ref={videoRef} autoPlay playsInline style={{ width: "100%" }} />
       {!recording ? (
         <button onClick={startStreaming}>Start Streaming</button>
       ) : (

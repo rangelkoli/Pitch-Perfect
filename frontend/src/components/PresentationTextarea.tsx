@@ -3,7 +3,13 @@ import { useId } from "react";
 import { useState } from "react";
 import TextareaAutosize from "react-textarea-autosize";
 
-function PresentationTextArea() {
+function PresentationTextArea({
+  text,
+  onChange,
+}: {
+  text: string;
+  onChange: (e: React.ChangeEvent<HTMLTextAreaElement>) => void;
+}) {
   const id = useId();
   return (
     <div className='group relative min-w-[300px]'>
@@ -18,6 +24,8 @@ function PresentationTextArea() {
       <TextareaAutosize
         className='w-full h-full min-h-[400px] p-3 border-2 border-blue-500 rounded-lg resize-none focus:outline-none focus:ring-2 focus:ring-blue-300'
         placeholder='Enter your presentation text here...'
+        onChange={onChange}
+        value={text}
       />
     </div>
   );
