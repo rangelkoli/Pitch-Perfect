@@ -1,8 +1,11 @@
+"use client";
+
 import { useState, useEffect, useCallback } from "react";
 import { Window } from "./window";
 import { PresentationContent } from "./presentation-content";
 import { WebcamContent } from "./webcam-content";
 import { ScriptContent } from "./script-content";
+import { ScoreboardPage } from "./scoreboard-page";
 import { Button } from "@/components/ui/button";
 
 type WindowType = "presentation" | "webcam" | "script";
@@ -13,10 +16,19 @@ interface WindowState {
   content: React.ReactNode;
 }
 
+interface FeedbackItem {
+  category: string;
+  score: number;
+  feedback: string;
+}
+
 export function PresentationLayout() {
   const [windows, setWindows] = useState<WindowState[]>([]);
   const [isStarted, setIsStarted] = useState(false);
   const [countdown, setCountdown] = useState(5);
+  const [isFinished, setIsFinished] = useState(false);
+  const [feedbackData, setFeedbackData] = useState<FeedbackItem[]>([]);
+  const [videoUrl, setVideoUrl] = useState<string | null>(null);
 
   const startScript = useCallback(() => {
     console.log("Starting script");
@@ -30,7 +42,16 @@ export function PresentationLayout() {
         position: "large",
         content: <PresentationContent />,
       },
-      { type: "webcam", position: "small", content: <WebcamContent /> },
+      {
+        type: "webcam",
+        position: "small",
+        content: (
+          <WebcamContent
+            onAnalysis={handleAnalysis}
+            onVideoRecorded={handleVideoRecorded}
+          />
+        ),
+      },
       {
         type: "script",
         position: "small",
@@ -38,6 +59,22 @@ export function PresentationLayout() {
       },
     ]);
   }, [startScript]);
+
+  const handleAnalysis = useCallback((analysisResult: any) => {
+    // Process the analysis result and update feedbackData
+    // This is a placeholder implementation. You should adapt this to your actual AI analysis output
+    const newFeedbackItem: FeedbackItem = {
+      category: "Speech Clarity",
+      score: Math.random() * 10,
+      feedback:
+        "Your speech was clear and well-paced. Consider varying your tone to emphasize key points.",
+    };
+    setFeedbackData((prev) => [...prev, newFeedbackItem]);
+  }, []);
+
+  const handleVideoRecorded = useCallback((url: string) => {
+    setVideoUrl(url);
+  }, []);
 
   const handleMaximize = (windowType: WindowType) => {
     setWindows((prev) => {
@@ -62,6 +99,14 @@ export function PresentationLayout() {
 
   const startPresentation = () => {
     setIsStarted(true);
+  };
+
+  const finishPresentation = () => {
+    setIsFinished(true);
+  };
+
+  const backToPresentation = () => {
+    setIsFinished(false);
   };
 
   useEffect(() => {
@@ -94,6 +139,16 @@ export function PresentationLayout() {
     );
   }
 
+  if (isFinished) {
+    return (
+      <ScoreboardPage
+        onBack={backToPresentation}
+        feedbackData={feedbackData}
+        videoUrl={videoUrl || ""}
+      />
+    );
+  }
+
   return (
     <div className='h-screen w-full bg-zinc-900 p-4'>
       <div className='relative h-full w-full grid gap-4 grid-rows-[1fr_auto]'>
@@ -122,6 +177,9 @@ export function PresentationLayout() {
           ))}
         </div>
       </div>
+      <Button onClick={finishPresentation} className='mt-4'>
+        Finish Presentation
+      </Button>
     </div>
   );
 }

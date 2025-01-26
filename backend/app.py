@@ -10,6 +10,7 @@ import time
 from openai import OpenAI
 import os
 from supabase import create_client, Client
+from blueprints.crewAi.crewAi import crew_ai_blueprint
 
 url: str = os.environ.get("SUPABASE_URL")
 key: str = os.environ.get("SUPABASE_KEY")
@@ -26,6 +27,7 @@ genai.configure(api_key=os.environ.get('GEMINI_API_KEY'))
 app = Flask(__name__)
 CORS(app)  # Enable CORS for cross-origin requests
 
+app.register_blueprint(crew_ai_blueprint)
 UPLOAD_FOLDER = 'uploads'
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 

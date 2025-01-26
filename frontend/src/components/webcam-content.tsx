@@ -7,19 +7,29 @@ import { Video, VideoOff, Play, Square } from "lucide-react";
 
 interface WebcamContentProps {
   onStart?: () => void;
+  onAnalysis?: (result: any) => void;
+  onVideoRecorded?: (url: string) => void;
 }
 
-export function WebcamContent({ onStart }: WebcamContentProps) {
+export function WebcamContent({
+  onStart,
+  onAnalysis,
+  onVideoRecorded,
+}: WebcamContentProps) {
   const videoRef = useRef<HTMLVideoElement>(null);
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const [isStreamActive, setIsStreamActive] = useState(false);
   const [recording, setRecording] = useState(false);
   const [analysisResult, setAnalysisResult] = useState<any>(null);
   const recordedChunksRef = useRef<BlobPart[]>([]);
+  const fullVideoChunksRef = useRef<BlobPart[]>([]);
 
   const startWebcam = async () => {
     try {
-      const stream = await navigator.mediaDevices.getUserMedia({ video: true });
+      const stream = await navigator.mediaDevices.getUserMedia({
+        video: true,
+        audio: true,
+      });
       if (videoRef.current) {
         videoRef.current.srcObject = stream;
         setIsStreamActive(true);
@@ -54,6 +64,7 @@ export function WebcamContent({ onStart }: WebcamContentProps) {
     mediaRecorder.ondataavailable = (event: BlobEvent) => {
       if (event.data.size > 0) {
         recordedChunksRef.current.push(event.data);
+        fullVideoChunksRef.current.push(event.data);
       }
     };
 
@@ -66,6 +77,15 @@ export function WebcamContent({ onStart }: WebcamContentProps) {
         // Restart the recording for the next 6-second clip
         mediaRecorder.start();
         setTimeout(() => mediaRecorder.stop(), 6000);
+      } else {
+        // Presentation finished, create full video URL
+        const fullVideoBlob = new Blob(fullVideoChunksRef.current, {
+          type: "video/webm",
+        });
+        const fullVideoUrl = URL.createObjectURL(fullVideoBlob);
+        if (onVideoRecorded) {
+          onVideoRecorded(fullVideoUrl);
+        }
       }
     };
 
@@ -73,7 +93,7 @@ export function WebcamContent({ onStart }: WebcamContentProps) {
     mediaRecorder.start();
     setRecording(true);
     setTimeout(() => mediaRecorder.stop(), 6000);
-  }, [recording]);
+  }, [recording, onVideoRecorded]);
 
   const stopStreaming = () => {
     setRecording(false);
@@ -102,6 +122,9 @@ export function WebcamContent({ onStart }: WebcamContentProps) {
 
       const { data } = response;
       setAnalysisResult(data);
+      if (onAnalysis) {
+        onAnalysis(data);
+      }
     } catch (error) {
       console.error("Error sending video clip for analysis:", error);
     }
