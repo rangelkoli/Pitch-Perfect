@@ -8,6 +8,14 @@ import os
 import google.generativeai as genai
 import time
 from openai import OpenAI
+import os
+from supabase import create_client, Client
+
+url: str = os.environ.get("SUPABASE_URL")
+key: str = os.environ.get("SUPABASE_KEY")
+supabase: Client = create_client(url, key)
+
+
 base_url = os.environ.get('AIML_BASE_URL')
 api_key = os.environ.get('AIML_API_KEY')
 
@@ -39,12 +47,41 @@ chat_session = model.start_chat(
   ]
 )
 
+videoUsers = {
+    "user1": [
+        {
+            1: "video.com"
+        }
+    ]
+}
+
 prompts = {
     "describe_video": "I want you to describe the video",
     "generate_presentation_script": "Based on the given script/topic i want you to generate a 10 min presentation script. Give me the response in html format, only give me the script, no need to give me the slides",
-    "generate_live_feedback": "Based on the given few seconds of video i want you to check if the user is doing anything wrong while presenting and if so i want you to give the user a 1 line feedback of what the user should do correctly and also give a score, else i want you to just give score out of 100",
+    "generate_script_system_promptMain": """
+You are an expert in presentation skills, specializing in analyzing body language, tone, gestures, eye contact, pacing, and overall delivery. The user has provided a video clip of their presentation along with the corresponding script.
+
+Your task:
+
+Analyze the clip and compare the user's delivery to the script.
+Identify areas where the user needs to improve, including:
+Gesture usage (too little, too much, or mismatched gestures).
+Body language (posture, movement, facial expressions).
+Voice modulation (tone, volume, pace, or clarity).
+Eye contact (too much, too little, or inappropriate focus).
+Provide actionable feedback in concise bullet points.
+If no changes are needed and the presentation is perfect, respond with "Nothing to change."
+
+Input:
+
+Video clip of the presentation.
+Script of the presentation.
+Output:
+
+List 1 feedback point or "Nothing to change" if the presentation is flawless.""",
     "generate_script_system_prompt": "You are a AI assistant that helps users generate presentation scripts. Based on the given script/topic, generate a 10 min presentation script. Give me the response in html format, only give me the script, no need to give me the slides",
     "generate_presentation_slides": "Based on the given script/topic i want you to generate a 10 min presentation slides. Give me the response in html format, only give me the slides, no need to give me the script",
+    
 }
 
 @app.route('/generate_presentation_script', methods=['POST'])
@@ -62,6 +99,7 @@ def generate_presentation_script():
             {"role": "system", "content": prompts['generate_script_system_prompt'] + text},
             {"role": "user", "content": prompt},
         ],
+        max_tokens=8192,
       )
 
       slides = api.chat.completions.create(
@@ -70,6 +108,7 @@ def generate_presentation_script():
             {"role": "system", "content": prompts['generate_presentation_slides'] + text},
             {"role": "user", "content": prompt},
         ],
+        max_tokens=8192,
       )
 
 
@@ -79,6 +118,7 @@ def generate_presentation_script():
           "slides": slides.choices[0].message.content
       }
     except Exception as e:
+        print(e)
         return jsonify({"error": str(e)}), 500
 
 @app.route('/analyze', methods=['POST'])
@@ -88,8 +128,32 @@ async def analyze_video():
         file = request.files['video']
         filepath = os.path.join(UPLOAD_FOLDER, 'clip.webm')
         file.save(filepath)
+        count = len(videoUsers["user1"]) + 1
+        username = "user1"
+        print(count)
+        # response = supabase.storage.from_('video_files').upload(f'{username}{count}.webm', filepath)
 
-        video_file = genai.upload_file(path=filepath)
+        # print(response)
+        print(f'{username}{count}.webm')
+        filename = f'{username}{count}'
+        filename = filename.replace(" ", "_")
+        filename = filename.lower().replace("-", "_")
+        video_file = genai.upload_file(path=filepath, name=filename)
+
+        videoUsers[username].append({count: f'{username}{count}.webm'})
+
+        print(video_file)
+        print(videoUsers)
+
+        # res = api.chat.completions.create(
+        #     model='gemini-2.0-flash-exp',
+        #     messages=[
+        #         {"role": "system", "content": prompts['describe_video']},
+        #         {"role": "user", "content": "I want you to describe the video"},
+        #     ],
+        #     max_tokens=8192,  
+        #     )
+
         # Check whether the file is ready to be used.
         while video_file.state.name == "PROCESSING":
             print('.', end='')
@@ -98,8 +162,8 @@ async def analyze_video():
         print(video_file)
         if not video_file:
             return jsonify({"error": "Failed to upload file"}), 500
-        prompt = "I Want you to describe the video "
-        response =  model.generate_content([video_file, prompt], request_options={"timeout": 600})
+        prompt = prompts['generate_script_system_promptMain']
+        response = model.generate_content([prompt, video_file], request_options={"timeout": 600})
 
         print(response)
 
@@ -110,7 +174,9 @@ async def analyze_video():
         genai.delete_file(video_file.name)
 
         return jsonify(response.candidates[0].content.parts[0].text)
+        return jsonify(response)
     except Exception as e:
+        print(e)
         return jsonify({"error": str(e)}), 500
 
 
