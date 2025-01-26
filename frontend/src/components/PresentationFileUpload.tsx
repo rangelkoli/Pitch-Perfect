@@ -3,7 +3,7 @@ import PresentationTextArea from "./PresentationTextarea";
 import { toast } from "react-toastify";
 import { Button } from "./ui/button";
 import axios from "axios";
-
+import { usePresentationStore } from "@/stores/presentation";
 const PresentationFileUpload = () => {
   const fileInputRef = React.useRef<HTMLInputElement>(null);
   const [text, setText] = React.useState("");
@@ -12,6 +12,7 @@ const PresentationFileUpload = () => {
       fileInputRef.current.click();
     }
   };
+  const script = usePresentationStore((state) => state.script);
 
   const handleSubmitButton = async () => {
     // Handle submit button click
@@ -41,6 +42,7 @@ const PresentationFileUpload = () => {
         )
         .then((response) => {
           console.log(response);
+          usePresentationStore.setState({ script: response.data });
           return response;
         });
       console.log("Presentation script generated successfully:", response.data);
@@ -129,7 +131,7 @@ const PresentationFileUpload = () => {
       >
         Upload File
       </Button>
-      {text}
+      {JSON.stringify(script)}
     </div>
   );
 };

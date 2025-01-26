@@ -44,7 +44,7 @@ prompts = {
     "generate_presentation_script": "Based on the given script/topic i want you to generate a 10 min presentation script. Give me the response in html format, only give me the script, no need to give me the slides",
     "generate_live_feedback": "Based on the given few seconds of video i want you to check if the user is doing anything wrong while presenting and if so i want you to give the user a 1 line feedback of what the user should do correctly and also give a score, else i want you to just give score out of 100",
     "generate_script_system_prompt": "You are a AI assistant that helps users generate presentation scripts. Based on the given script/topic, generate a 10 min presentation script. Give me the response in html format, only give me the script, no need to give me the slides",
-
+    "generate_presentation_slides": "Based on the given script/topic i want you to generate a 10 min presentation slides. Give me the response in html format, only give me the slides, no need to give me the script",
 }
 
 @app.route('/generate_presentation_script', methods=['POST'])
@@ -57,17 +57,26 @@ def generate_presentation_script():
       if text:
         prompt = prompts['generate_presentation_script'] + text
       completion = api.chat.completions.create(
-        model='deepseek/deepseek-r1',
+        model='gemini-2.0-flash-exp',
         messages=[
             {"role": "system", "content": prompts['generate_script_system_prompt'] + text},
             {"role": "user", "content": prompt},
         ],
       )
 
-      response = model.generate_content([prompt], request_options={"timeout": 600})
+      slides = api.chat.completions.create(
+      model='gemini-2.0-flash-exp',
+        messages=[
+            {"role": "system", "content": prompts['generate_presentation_slides'] + text},
+            {"role": "user", "content": prompt},
+        ],
+      )
+
+
+      # response = model.generate_content([prompt], request_options={"timeout": 600})
       return {
-          "response": response.candidates[0].content.parts[0].text,
-          "completion": completion.choices[0].message.content
+          "completion": completion.choices[0].message.content,
+          "slides": slides.choices[0].message.content
       }
     except Exception as e:
         return jsonify({"error": str(e)}), 500

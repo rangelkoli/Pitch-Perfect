@@ -1,11 +1,5 @@
-import React, { useState } from "react";
-import {
-  BtnBold,
-  BtnItalic,
-  Editor,
-  EditorProvider,
-  Toolbar,
-} from "react-simple-wysiwyg";
+import { useState } from "react";
+import { Editor, EditorProvider, Toolbar } from "react-simple-wysiwyg";
 import WebcamStream from "./AiPresentation";
 const PresentationPractice = () => {
   const [html, setHtml] = useState("");
